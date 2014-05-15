@@ -1,2 +1,2 @@
-python-rtmidi
+python-rtmidi>=0.4.3b1
 pyside
