@@ -1,24 +1,28 @@
 # -*- coding: utf-8 -*-
 
-import sys
-import os
-import shutil
-import subprocess
-from pprint     import pprint
-from midi       import *
-from tester     import *
+from midi       import Midi, MidiInterface
+from engine     import Engine, TranslationUnit, Thru
+
+# ------------------------------------------------------------------------------
+
+def populate(engine):
+    # Logidy UMI3 -> Pro Tools (MMC Slave)
+    engine.translationUnits.append(TranslationUnit([Midi.Start],    Midi.MMC.generate(Midi.MMC.Play, 127)))
+    engine.translationUnits.append(TranslationUnit([Midi.Stop],     Midi.MMC.generate(Midi.MMC.Stop, 127)))
+    engine.translationUnits.append(TranslationUnit([Midi.Continue], Midi.MMC.generate(Midi.MMC.RecordStrobe, 127)))
+    engine.translationUnits.append(Thru())
 
 # ------------------------------------------------------------------------------
 
 def main():
     midiInterface = MidiInterface()
-    #tester  = Tester(midiInterface)
-    #midiInterface.listenerCallback = tester.handleMidiInput
+    engine = Engine(midiInterface)
+    populate(engine)
+    midiInterface.listenerCallback = engine.handleMidiInput
 
     while True:
-        midiInterface.send(Midi.MMC.generate(Midi.MMC.Play))
-
-
+        # Loop until quitting
+        pass
 
 # ------------------------------------------------------------------------------
 

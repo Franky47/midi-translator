@@ -65,7 +65,31 @@ class MidiInterface:
         self.output             = rtmidi.MidiOut()
         self.listenerCallback   = listenerCallback
         self.ports              = self.getAvailablePorts()
-        self.port               = self.connect(self.choosePorts())
+        self.connect(self.choosePorts())
+
+    # --------------------------------------------------------------------------
+
+    class Port:
+        def __init__(self, interface, id, name):
+            self.interface = interface
+            self.virtual   = False
+            self.id        = id
+            self.name      = name
+
+        @staticmethod
+        def createVirtualPort(interface):
+            port = MidiInterface.Port(interface, 'v', 'Virtual Port')
+            port.virtual = True
+            return port
+
+        def open(self):
+            if self.virtual:
+                self.interface.open_virtual_port()
+            else:
+                self.interface.open_port(self.id)
+
+        def close(self):
+            self.interface.close_port()
 
     # --------------------------------------------------------------------------
 
@@ -81,51 +105,56 @@ class MidiInterface:
     # --------------------------------------------------------------------------
 
     def getAvailablePorts(self):
-        return {
-            'input' : self.input.get_ports(),
-            'output': self.output.get_ports(),
+        inputPorts  = self.input.get_ports()
+        outputPorts = self.output.get_ports()
+        d = {
+            'input' : [MidiInterface.Port.createVirtualPort(self.input)],
+            'output': [MidiInterface.Port.createVirtualPort(self.output)],
         }
+        for name, id in zip(inputPorts, range(0, len(inputPorts))):
+            d['input'].append(MidiInterface.Port(self.input, id, name))
+        for name, id in zip(outputPorts, range(0, len(outputPorts))):
+            d['output'].append(MidiInterface.Port(self.output, id, name))
+        return d
 
     def choosePorts(self):
         return {
             'input' : self.choosePort(self.ports['input'],  'input'),
-            'output': self.choosePort(self.ports['output'], 'output')
+            'output': self.choosePort(self.ports['output'], 'output'),
         }
 
     def choosePort(self, ports, direction):
-        if not ports:
-            print('No MIDI ports available, bailing out.')
-            return None
-
-        if len(ports) == 1:
-            return {
-                'id':   0,
-                'name': ports[0]
-            }
-
-        else:
-            # Give a choice
-            print('Multiple %s ports available, please make a choice:' % direction)
-            choices = dict()
-            for port, i in zip(ports, range(0, len(ports))):
-                choices[i] = port
-                print('  [%d]' % i, port)
-            choiceIndex = int(input('-> '))
-            return {
-                'id': choiceIndex,
-                'name': choices[choiceIndex]
-            }
+        print('Select %s port:' % direction)
+        choices = { 'x': None }
+        print('  [x] No %s' % direction)
+        for port in ports:
+            print('  [%s]' % str(port.id), port.name)
+            choices[str(port.id)] = port
+        return choices[input('-> ')]
 
     # --------------------------------------------------------------------------
 
     def connect(self, ports):
-        if not ports:
-            return None
+        assert ports
+        assert 'input'  in ports
+        assert 'output' in ports
 
-        print('Connecting input to %s'  % ports['input']['name'])
-        print('Connecting output to %s' % ports['output']['name'])
+        if not ports['input']:
+            pass # No input
+        elif ports['input'].virtual:
+            print('Creating virtual input port')
+            self.input.set_callback(self.handleMidiInput)
+            self.input.open_virtual_port()
+        else:
+            print('Connecting input to %s' % ports['input'].name)
+            self.input.set_callback(self.handleMidiInput)
+            self.input.open_port(ports['input'].id)
 
-        self.input.set_callback(self.handleMidiInput)
-        self.input.open_port(ports['input']['id'])
-        self.output.open_port(ports['output']['id'])
-        return ports
+        if not ports['output']:
+            pass # No output
+        elif ports['output'].virtual:
+            print('Creating virtual output port')
+            self.output.open_virtual_port()
+        else:
+            print('Connecting output to %s' % ports['output'].name)
+            self.output.open_port(ports['output'].id)
