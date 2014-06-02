@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import rtmidi
 
 # ------------------------------------------------------------------------------
@@ -99,7 +100,7 @@ class MidiInterface:
             self.listenerCallback(midiData)
 
     def send(self, message):
-        print('Sending', message)
+        print('Sending %s' % str(message))
         self.output.send_message(message)
 
     # --------------------------------------------------------------------------
@@ -128,9 +129,12 @@ class MidiInterface:
         choices = { 'x': None }
         print('  [x] No %s' % direction)
         for port in ports:
-            print('  [%s]' % str(port.id), port.name)
+            print('  [%s] %s' % (str(port.id), port.name))
             choices[str(port.id)] = port
-        return choices[input('-> ')]
+        if sys.version >= '3.0':
+            return choices[input('-> ')]
+        else:
+            return choices[raw_input('-> ')]
 
     # --------------------------------------------------------------------------
 

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+
+# ------------------------------------------------------------------------------
+
 class Engine:
     def __init__(self, interface):
         self.interface = interface
@@ -23,9 +27,20 @@ class TranslationUnit:
 
 # ------------------------------------------------------------------------------
 
-class Thru(TranslationUnit):
-    def __init__(self):
-        super().__init__(None, None)
+if sys.version >= '3.0':
 
-    def process(self, data):
-        return data
+    class Thru(TranslationUnit):
+        def __init__(self):
+            super().__init__(None, None)
+
+        def process(self, data):
+            return data
+
+else:
+
+    class Thru(TranslationUnit):
+        def __init__(self):
+            TranslationUnit.__init__(self, None, None)
+
+        def process(self, data):
+            return data

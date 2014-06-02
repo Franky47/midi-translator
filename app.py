@@ -7,9 +7,10 @@ from engine     import Engine, TranslationUnit, Thru
 
 def populate(engine):
     # Logidy UMI3 -> Pro Tools (MMC Slave)
-    engine.translationUnits.append(TranslationUnit([Midi.Start],    Midi.MMC.generate(Midi.MMC.Play, 127)))
-    engine.translationUnits.append(TranslationUnit([Midi.Stop],     Midi.MMC.generate(Midi.MMC.Stop, 127)))
-    engine.translationUnits.append(TranslationUnit([Midi.Continue], Midi.MMC.generate(Midi.MMC.RecordStrobe, 127)))
+    proToolsId = 127
+    engine.translationUnits.append(TranslationUnit([Midi.Start],    Midi.MMC.generate(Midi.MMC.Play, proToolsId)))
+    engine.translationUnits.append(TranslationUnit([Midi.Stop],     Midi.MMC.generate(Midi.MMC.Stop, proToolsId)))
+    engine.translationUnits.append(TranslationUnit([Midi.Continue], Midi.MMC.generate(Midi.MMC.RecordStrobe, proToolsId)))
     engine.translationUnits.append(Thru())
 
 # ------------------------------------------------------------------------------
